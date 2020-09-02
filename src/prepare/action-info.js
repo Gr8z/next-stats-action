@@ -49,7 +49,9 @@ module.exports = function actionInfo() {
     actionName: GITHUB_ACTION,
     githubToken: INPUT_GITHUBTOKEN,
     customCommentEndpoint: !!commentEndpoint,
-    gitRoot: GIT_ROOT_DIR || 'github.com/',
+    gitRoot:
+      GIT_ROOT_DIR ||
+      `https://${INPUT_GITHUBTOKEN ? `${INPUT_GITHUBTOKEN}@` : ''}github.com/`,
     prRepo: GITHUB_REPOSITORY,
     prRef: GITHUB_REF,
     isLocal: LOCAL_STATS,
