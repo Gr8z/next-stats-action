@@ -14,14 +14,13 @@ module.exports = function actionInfo() {
     COMMENT_ENDPOINT,
     GITHUB_REPOSITORY,
     GITHUB_EVENT_PATH,
-    PR_STATS_COMMENT_TOKEN,
+    GITHUB_TOKEN,
   } = process.env
 
   delete process.env.GITHUB_TOKEN
-  delete process.env.PR_STATS_COMMENT_TOKEN
 
   // only use custom endpoint if we don't have a token
-  const commentEndpoint = !PR_STATS_COMMENT_TOKEN && COMMENT_ENDPOINT
+  const commentEndpoint = !GITHUB_TOKEN && COMMENT_ENDPOINT
 
   if (LOCAL_STATS === 'true') {
     const cwd = process.cwd()
@@ -48,9 +47,9 @@ module.exports = function actionInfo() {
     commentEndpoint,
     skipClone: SKIP_CLONE,
     actionName: GITHUB_ACTION,
-    githubToken: PR_STATS_COMMENT_TOKEN,
+    githubToken: GITHUB_TOKEN,
     customCommentEndpoint: !!commentEndpoint,
-    gitRoot: GIT_ROOT_DIR || 'https://github.com/',
+    gitRoot: GIT_ROOT_DIR || 'github.com/',
     prRepo: GITHUB_REPOSITORY,
     prRef: GITHUB_REF,
     isLocal: LOCAL_STATS,
@@ -90,7 +89,7 @@ module.exports = function actionInfo() {
   logger('Got actionInfo:')
   logger.json({
     ...info,
-    githubToken: PR_STATS_COMMENT_TOKEN ? 'found' : 'missing',
+    githubToken: GITHUB_TOKEN ? 'found' : 'missing',
   })
 
   return info
