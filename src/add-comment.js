@@ -1,3 +1,5 @@
+const path = require('path')
+const fs = require('fs').promises
 const fetch = require('node-fetch')
 const prettyMs = require('pretty-ms')
 const logger = require('./util/logger')
@@ -16,7 +18,7 @@ const round = (num, places) => {
   return Math.round(num * placesFactor) / placesFactor
 }
 
-const shortenLabel = itemKey =>
+const shortenLabel = (itemKey) =>
   itemKey.length > 24
     ? `${itemKey.substr(0, 12)}..${itemKey.substr(itemKey.length - 12, 12)}`
     : itemKey
@@ -34,11 +36,9 @@ module.exports = async function addComment(
       : statsConfig.commentHeading || 'Stats from current PR'
   }\n\n`
 
-  const tableHead = `|  | ${statsConfig.mainRepo} ${
-    statsConfig.mainBranch
-  } ${actionInfo.lastStableTag || ''} | ${actionInfo.prRepo} ${
-    actionInfo.prRef
-  } | Change |\n| - | - | - | - |\n`
+  const tableHead = `|  | ${statsConfig.mainRepo} ${statsConfig.mainBranch} ${
+    actionInfo.lastStableTag || ''
+  } | ${actionInfo.prRepo} ${actionInfo.prRef} | Change |\n| - | - | - | - |\n`
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i]
@@ -47,7 +47,7 @@ module.exports = async function addComment(
     let resultHasDecrease = false
     let resultContent = ''
 
-    Object.keys(result.mainRepoStats).forEach(groupKey => {
+    Object.keys(result.mainRepoStats).forEach((groupKey) => {
       const isBenchmark = groupKey === benchTitle
       const mainRepoGroup = result.mainRepoStats[groupKey]
       const diffRepoGroup = result.diffRepoStats[groupKey]
@@ -60,7 +60,7 @@ module.exports = async function addComment(
       let diffRepoTotal = 0
       let totalChange = 0
 
-      itemKeys.forEach(itemKey => {
+      itemKeys.forEach((itemKey) => {
         const prettyType = itemKey.match(/(length|duration)/i) ? 'ms' : 'bytes'
         const isGzipItem = itemKey.endsWith('gzip')
         const mainItemVal = mainRepoGroup[itemKey]
@@ -101,7 +101,15 @@ module.exports = async function addComment(
             // check if there is still a change after rounding
             if (change !== 0) {
               const absChange = Math.abs(change)
-              change = `${change < 0 ? '-' : '⚠️ +'}${
+              const warnIfNegative = isBenchmark && itemKey.match(/req\/sec/)
+              const warn = warnIfNegative
+                ? change < 0
+                  ? '⚠️ '
+                  : ''
+                : change > 0
+                ? '⚠️ '
+                : ''
+              change = `${warn}${change < 0 ? '-' : '+'}${
                 useRawValue ? absChange : prettify(absChange, prettyType)
               }`
             }
@@ -164,7 +172,7 @@ module.exports = async function addComment(
       const diffHeading = '#### Diffs\n'
       let diffContent = diffHeading
 
-      Object.keys(result.diffs).forEach(itemKey => {
+      Object.keys(result.diffs).forEach((itemKey) => {
         const curDiff = result.diffs[itemKey]
         diffContent += `<details>\n`
         diffContent += `<summary>Diff for <strong>${shortenLabel(
@@ -200,7 +208,13 @@ module.exports = async function addComment(
       comment += `<hr/>\n`
     }
   }
-  logger('\n--stats start--\n', comment, '\n--stats end--\n')
+  if (process.env.LOCAL_STATS) {
+    const statsPath = path.resolve('pr-stats.md')
+    await fs.writeFile(statsPath, comment)
+    console.log(`Output PR stats to ${statsPath}`)
+  } else {
+    logger('\n--stats start--\n', comment, '\n--stats end--\n')
+  }
 
   if (
     actionInfo.customCommentEndpoint ||

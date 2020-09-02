@@ -4,11 +4,11 @@ const exec = require('../util/exec')
 const { remove } = require('fs-extra')
 const logger = require('../util/logger')
 
-module.exports = actionInfo => {
+module.exports = (actionInfo) => {
   return {
     async cloneRepo(repoPath = '', dest = '') {
       await remove(dest)
-      await exec(`git clone https://${actionInfo.githubToken}@github.com/${repoPath} ${dest}`)
+      await exec(`git clone ${actionInfo.gitRoot}${repoPath} ${dest}`)
     },
     async checkoutRef(ref = '', repoDir = '') {
       await exec(`cd ${repoDir} && git fetch && git checkout ${ref}`)
