@@ -14,13 +14,13 @@ module.exports = function actionInfo() {
     COMMENT_ENDPOINT,
     GITHUB_REPOSITORY,
     GITHUB_EVENT_PATH,
-    GITHUB_TOKEN,
+    INPUT_GITHUBTOKEN,
   } = process.env
 
   delete process.env.GITHUB_TOKEN
 
   // only use custom endpoint if we don't have a token
-  const commentEndpoint = !GITHUB_TOKEN && COMMENT_ENDPOINT
+  const commentEndpoint = !INPUT_GITHUBTOKEN && COMMENT_ENDPOINT
 
   if (LOCAL_STATS === 'true') {
     const cwd = process.cwd()
@@ -47,7 +47,7 @@ module.exports = function actionInfo() {
     commentEndpoint,
     skipClone: SKIP_CLONE,
     actionName: GITHUB_ACTION,
-    githubToken: GITHUB_TOKEN,
+    githubToken: INPUT_GITHUBTOKEN,
     customCommentEndpoint: !!commentEndpoint,
     gitRoot: GIT_ROOT_DIR || 'github.com/',
     prRepo: GITHUB_REPOSITORY,
@@ -89,7 +89,7 @@ module.exports = function actionInfo() {
   logger('Got actionInfo:')
   logger.json({
     ...info,
-    githubToken: GITHUB_TOKEN ? 'found' : 'missing',
+    githubToken: INPUT_GITHUBTOKEN ? 'found' : 'missing',
   })
 
   return info
